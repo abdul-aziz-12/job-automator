@@ -1,2 +1,2 @@
 # project-automator
-End-to-end workflow automations using n8n, Zapier, PhantomBuster, Python &amp; JS for self and volunteer projects
+Automating workflows and job applications with n8n, Zapier, PhantomBuster, Python & JS.
