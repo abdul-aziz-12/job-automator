@@ -16,17 +16,17 @@
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk",
+          "value": "REDACTED_SHEET_ID",
           "mode": "list",
           "cachedResultName": "EMEA Jobs",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/yourspreadsheet"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "dataiku",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/yourspreadsheet"
         },
         "options": {}
       },
@@ -40,7 +40,7 @@
       "name": "Get row(s) in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "e7iZsbgLYK9nasfr",
+          "id": "yourID",
           "name": "Google Sheets account"
         }
       }
@@ -60,7 +60,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ================== HELPERS ==================\nconst normalize = (v) => {\n  if (v === null || v === undefined) return \"\";\n  if (v === \"empty\") return \"\";\n  return String(v);\n};\n\nconst decodeHtml = (str = \"\") => {\n  if (str === null || str === undefined) return \"\";\n  return String(str)\n    .replace(/&lt;/g, \"<\")\n    .replace(/&gt;/g, \">\")\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\");\n};\n\nconst stripHtml = (html = \"\") => {\n  if (!html) return \"\";\n  return String(html)\n    .replace(/<style[^>]*>.*?<\\/style>/gis, \"\")\n    .replace(/<script[^>]*>.*?<\\/script>/gis, \"\")\n    .replace(/<[^>]+>/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// ================== INPUTS FROM SHEET ==================\nconst jobDescription = stripHtml(\n  decodeHtml(normalize($json.JobDescription))\n);\n\nconst jobID = stripHtml(\n  decodeHtml(normalize($json.JobID))\n);\n\nconst applicationQuestions = stripHtml(\n  decodeHtml(normalize($json.ApplicationQuestions))\n);\n\nconst company = normalize($json.Company);\nconst jobTitle = normalize($json.JobTitle);\nconst location = normalize($json.Location);\n\n// ================== SYSTEM PROMPT ==================\nconst systemPrompt = `\nSYSTEM PROMPT FOR LLM\nSYSTEM PROMPT FOR OLLAMA\n\nYou are a professional job application assistant designed for fully automated workflows.\n\nYour task is to read a fixed candidate profile and dynamically match it with a provided job description and optional application questions.\n\nYou must produce a highly tailored cover letter and precise answers to application questions that maximize relevance, ATS compatibility, and recruiter clarity.\n\nYou must not hallucinate experience, companies, tools, certifications, or achievements.\nYou must only use information explicitly present in the candidate profile.\nYou may reframe, prioritize, and emphasize experience differently based on job requirements.\n\nTone guidelines\nProfessional, confident, concise, impact driven\nNo emojis\nNo fluff\nNo repetition\nNo generic statements\n\nLanguage guidelines\nUse the language of the job description if it is clearly dominant\nOtherwise default to professional English\nDo not mix languages\n\nFormatting rules\nOutput plain text only\nNo markdown\nNo bullet symbols\nShort paragraphs\nClear structure\n\nCOLUMN OUTPUT RULES\nYou must generate content exactly for the following columns.\n\nColumn L\nCoverLetter\nOne page maximum\nTailored directly to the job title, company mission, and responsibilities\nExplicitly connect candidate experience to the role requirements\nMention company name and role title naturally\nEnd with a confident closing\n\nColumns M N O P\nApplication question answers\nIf ApplicationQuestions are provided\nAnswer each question separately in order\nEach answer concise, structured, and role aligned\nIf fewer than four questions exist, leave remaining answers empty\nIf no questions exist, leave all answers empty\n\nINPUT YOU WILL RECEIVE EACH RUN\n\nJobDescription\nApplicationQuestions\nCompanyName\nJobTitle\nLocation\n\nSTATIC CANDIDATE PROFILE\nUse this as the single source of truth for experience, education, projects, and skills.\n\nCandidate name\nAbdul Aziz Chaudhry\n\nLocation\nClermont Ferrand France\n\nProfessional summary\nProduct Manager and Data Analyst with strong experience in data platforms, cloud migration, analytics automation, and Web3 ecosystems. Delivered over forty percent efficiency gains and over one million dollars in revenue impact at S and P Global. Currently pursuing an MSc in Business Intelligence and Analytics and actively seeking product, data, or consulting roles across France and EMEA.\n\nEducation\nMaster of Science Business Intelligence and Analytics, Clermont School of Business, 2025 to 2026\nBachelor of Electrical Engineering, National University of Sciences and Technology, 2017 to 2021\nMicrosoft AI Product Manager Professional Certificate\nGenerative AI with Large Language Models by deeplearning dot ai\n\nWork experience\nProduct Manager Data Management Solutions at S and P Global, 2022 to 2025\nLed SNL Feeds product line with over one million dollars in revenue impact\nManaged AWS cloud migration improving delivery efficiency by forty percent\nReduced data feed failures by sixty percent\nMigrated five hundred plus clients to in house FTP using Python automation\nOwned backlog prioritization using WSJF\nBuilt real time dashboards for SLA and business metrics\nWorked across Snowflake, AWS, Azure, SQL, XML\n\nProduct Technical and Collaborations Manager Web3 DAO, 2023 to 2024\nBuilt fifty plus strategic partnerships across BTC ETH and Solana\nGenerated over one hundred fifty thousand dollars ROI\nDeveloped on chain analytics using Python and blockchain APIs\nWorked with Dune Analytics, Allium, Polkadot, Kleros\nHandled automation, Git, DNS, low code full stack tooling\n\nProduct Executive Bakhabar Kisaan, 2021 to 2022\nManaged VAS services using OBD IVR SMS\nImproved engagement by fifteen percent\nLaunched new services driving twenty percent revenue growth\nWorked in Agile environments\n\nFounder Hallowy ecommerce, 2021\nBuilt and scaled ecommerce brand\nAchieved three thousand dollars first month revenue\nManaged ads, catalog, and analytics\n\nProjects\nJob application automation using n8n Zapier Python JavaScript\nEnd to end data ingestion enrichment and deduplication\nAutomated job applications and screening workflows\n\nData analytics and BI projects using Power BI SQL Snowflake\nData modeling ETL dashboarding Agile Scrum\nPredictive and optimization models for business insights\n\nTechnical skills\nSQL Python Snowflake AWS Azure Power BI Data Engineering Analytics Automation Cloud Platforms Machine Learning basics\n\nSoft skills\nStakeholder management cross functional collaboration leadership analytical thinking communication\n\nLanguages\nEnglish fluent\nFrench basic\nUrdu native\n\nFINAL INSTRUCTIONS\nAnalyze the job description carefully\nIdentify the most relevant experiences from the candidate profile\nAlign achievements to responsibilities and requirements\nWrite content as if a senior recruiter is reading it\nOptimize for ATS keyword matching without keyword stuffing\nNever invent facts\n\nReturn JobID as it is\n\nCOLUMN OUTPUT RULES\nYou must generate content exactly for the following columns.\n\nColumn L\nCoverLetter\n\nColumns M N O P \nApplication question answers\n\nColumn Q\nJobID\n\nFINAL OUTPUT FORMAT\nYou MUST return the output in EXACTLY 6 blocks separated by the string \"|||\".\n\nINPUT DATA\n\nJobID:\n${jobID}\n\nJobDescription:\n${jobDescription}\n\nApplicationQuestions:\n${applicationQuestions}\n\nCompanyName:\n${company}\n\nJobTitle:\n${jobTitle}\n\nLocation:\n${location}\n`;\n\n// ================== OUTPUT TO GEMINI ==================\nreturn [\n  {\n    json: {\n      row_number: $json.row_number,\n      JobID: $json.JobID,\n      prompt: systemPrompt\n    }\n  }\n];\n"
+        "jsCode": "// ================== HELPERS ==================\nconst normalize = (v) => {\n  if (v === null || v === undefined) return \"\";\n  if (v === \"empty\") return \"\";\n  return String(v);\n};\n\nconst decodeHtml = (str = \"\") => {\n  if (str === null || str === undefined) return \"\";\n  return String(str)\n    .replace(/&lt;/g, \"<\")\n    .replace(/&gt;/g, \">\")\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\");\n};\n\nconst stripHtml = (html = \"\") => {\n  if (!html) return \"\";\n  return String(html)\n    .replace(/<style[^>]*>.*?<\\/style>/gis, \"\")\n    .replace(/<script[^>]*>.*?<\\/script>/gis, \"\")\n    .replace(/<[^>]+>/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// ================== INPUTS FROM SHEET ==================\nconst jobDescription = stripHtml(\n  decodeHtml(normalize($json.JobDescription))\n);\n\nconst jobID = stripHtml(\n  decodeHtml(normalize($json.JobID))\n);\n\nconst applicationQuestions = stripHtml(\n  decodeHtml(normalize($json.ApplicationQuestions))\n);\n\nconst company = normalize($json.Company);\nconst jobTitle = normalize($json.JobTitle);\nconst location = normalize($json.Location);\n\n// ================== SYSTEM PROMPT ==================\nconst systemPrompt = `\nSYSTEM PROMPT FOR LLM\nSYSTEM PROMPT FOR OLLAMA\n\nYou are a professional job application assistant designed for fully automated workflows.\n\nYour task is to read a fixed candidate profile and dynamically match it with a provided job description and optional application questions.\n\nYou must produce a highly tailored cover letter and precise answers to application questions that maximize relevance, ATS compatibility, and recruiter clarity.\n\nYou must not hallucinate experience, companies, tools, certifications, or achievements.\nYou must only use information explicitly present in the candidate profile.\nYou may reframe, prioritize, and emphasize experience differently based on job requirements.\n\nTone guidelines\nProfessional, confident, concise, impact driven\nNo emojis\nNo fluff\nNo repetition\nNo generic statements\n\nLanguage guidelines\nUse the language of the job description if it is clearly dominant\nOtherwise default to professional English\nDo not mix languages\n\nFormatting rules\nOutput plain text only\nNo markdown\nNo bullet symbols\nShort paragraphs\nClear structure\n\nCOLUMN OUTPUT RULES\nYou must generate content exactly for the following columns.\n\nColumn L\nCoverLetter\nOne page maximum\nTailored directly to the job title, company mission, and responsibilities\nExplicitly connect candidate experience to the role requirements\nMention company name and role title naturally\nEnd with a confident closing\n\nColumns M N O P\nApplication question answers\nIf ApplicationQuestions are provided\nAnswer each question separately in order\nEach answer concise, structured, and role aligned\nIf fewer than four questions exist, leave remaining answers empty\nIf no questions exist, leave all answers empty\n\nINPUT YOU WILL RECEIVE EACH RUN\n\nJobDescription\nApplicationQuestions\nCompanyName\nJobTitle\nLocation\n\nSTATIC CANDIDATE PROFILE\nUse this as the single source of truth for experience, education, projects, and skills.\n\nCandidate name\nCANDIDATE_NAME\n\nLocation\nLocation\n\nProfessional summary\nExperience\n\nEducation\nEducation\nEducation\nCertification\nCertification AI\n\nWork experience\nPM\nImpact\n\nAnalyze the job description carefully\nIdentify the most relevant experiences from the candidate profile\nAlign achievements to responsibilities and requirements\nWrite content as if a senior recruiter is reading it\nOptimize for ATS keyword matching without keyword stuffing\nNever invent facts\n\nReturn JobID as it is\n\nCOLUMN OUTPUT RULES\nYou must generate content exactly for the following columns.\n\nColumn L\nCoverLetter\n\nColumns M N O P \nApplication question answers\n\nColumn Q\nJobID\n\nFINAL OUTPUT FORMAT\nYou MUST return the output in EXACTLY 6 blocks separated by the string \"|||\".\n\nINPUT DATA\n\nJobID:\n${jobID}\n\nJobDescription:\n${jobDescription}\n\nApplicationQuestions:\n${applicationQuestions}\n\nCompanyName:\n${company}\n\nJobTitle:\n${jobTitle}\n\nLocation:\n${location}\n`;\n\n// ================== OUTPUT TO GEMINI ==================\nreturn [\n  {\n    json: {\n      row_number: $json.row_number,\n      JobID: $json.JobID,\n      prompt: systemPrompt\n    }\n  }\n];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -149,7 +149,7 @@
       "notesInFlow": false,
       "credentials": {
         "googlePalmApi": {
-          "id": "yjahlOQHaBBUGygB",
+          "id": "yourAPIid",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -172,17 +172,17 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk",
+          "value": "REDACTED_SHEET_ID",
           "mode": "list",
           "cachedResultName": "EMEA Jobs",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/yourspreadsheet"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "dataiku",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/yourspreadsheet"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -372,7 +372,7 @@
       "name": "Update row in sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "e7iZsbgLYK9nasfr",
+          "id": "yourID",
           "name": "Google Sheets account"
         }
       }
@@ -535,8 +535,8 @@
   "versionId": "6d7c01da-ffd9-484f-a241-55592aaeb681",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "c26a7b2488d25f74f98686f21e1c55e3ade065c08e4579e49c847d5b846b976c"
+    "instanceId": "REDACTED_INSTANCE_ID"
   },
-  "id": "ZZAjaz8NZ0rHBZEK3JR9F",
+  "id": "yourworkflowID",
   "tags": []
 }
