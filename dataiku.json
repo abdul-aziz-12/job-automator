@@ -1,0 +1,521 @@
+{
+  "name": "dataiku",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 17
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1008,
+        176
+      ],
+      "id": "faf283a0-f5f0-4088-a2fa-cf6b96a2d809",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://boards-api.greenhouse.io/v1/boards/dataiku/jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -768,
+        176
+      ],
+      "id": "8cabf980-777b-41f4-a313-e2e9266a4513",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk",
+          "mode": "list",
+          "cachedResultName": "EMEA Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "dataiku",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -512,
+        -48
+      ],
+      "id": "23b9b2d2-d62b-4eef-9b95-e0fe672442d7",
+      "name": "Get row(s) in sheet",
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "e7iZsbgLYK9nasfr",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://boards-api.greenhouse.io/v1/boards/dataiku/jobs/{{ $json.JobID }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -240,
+        384
+      ],
+      "id": "2ec42d78-4601-4fb3-8428-591059bd215c",
+      "name": "HTTP Request1",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = items[0].json.jobs || [];\nconst company = \"dataiku\"; // hardcoded\n\nreturn jobs.map(job => {\n  const location = job.location?.name || \"\";\n  const hash = `${company}|${job.title}|${location}`;\n\n  return {\n    json: {\n      DateFound: new Date().toISOString().split('T')[0],\n      ATS: \"Greenhouse\",\n      Company: company,\n      JobTitle: job.title,\n      Location: location,\n      ApplyURL: job.absolute_url,\n      Status: \"NEW\",\n      Hash: hash,\n      JobID: job.id // will use this in second request\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        176
+      ],
+      "id": "1ba0d96f-0a39-4dae-8516-3b69e728a510",
+      "name": "Code_Node1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n    const job = item.json;\n\n    return {\n        json: {\n            JobID: job.id || job.internal_job_id || \"\",         // Ensure JobID is always captured\n            JobDescription: job.content || \"\",                  // Job description content\n            ApplicationQuestions: Array.isArray(job.questions)  // Join multiple questions\n                ? job.questions.join(\" | \")\n                : \"\"\n        }\n    };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        384
+      ],
+      "id": "dd008ffe-d7f4-4689-97db-1ac7e3b74d85",
+      "name": "Code_Node2"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk",
+          "mode": "list",
+          "cachedResultName": "EMEA Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "dataiku",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "JobID"
+          ],
+          "schema": [
+            {
+              "id": "DateFound",
+              "displayName": "DateFound",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ATS",
+              "displayName": "ATS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JobTitle",
+              "displayName": "JobTitle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ApplyURL",
+              "displayName": "ApplyURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hash",
+              "displayName": "Hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JobDescription",
+              "displayName": "JobDescription",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ApplicationQuestions",
+              "displayName": "ApplicationQuestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JobID",
+              "displayName": "JobID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CoverLetter",
+              "displayName": "CoverLetter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_1",
+              "displayName": "Answer_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_2",
+              "displayName": "Answer_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_3",
+              "displayName": "Answer_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_4",
+              "displayName": "Answer_4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        96
+      ],
+      "id": "3d12ff80-0ded-44c8-b578-8bda79771ce1",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "e7iZsbgLYK9nasfr",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(job => {\n    const loc = job.json.Location.toLowerCase();\n    const title = job.json.JobTitle.toLowerCase();\n\n    // ✅ Location keywords\n    const locationKeywords = [\"france\", \"germany\", \"netherlands\", \"europe\", \"remote\"];\n    const locationMatch = locationKeywords.some(keyword => loc.includes(keyword));\n\n    // ✅ Job title keywords\n    const titleKeywords = [\"data analyst\", \"analyst\", \"business intelligence\", \"product owner\", \"product manager\"];\n    const titleMatch = titleKeywords.some(keyword => title.includes(keyword));\n\n    // ✅ Keep job only if both match\n    return locationMatch && titleMatch;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        176
+      ],
+      "id": "6c4b7d8d-593d-4abe-a1b5-66dd586a3b91",
+      "name": "Combines Job Description and Jobs"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "JobID",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        32,
+        240
+      ],
+      "id": "881990ef-b4e6-456a-a432-249c776c1819",
+      "name": "Combines job and description"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: 'items' is automatically available in n8n code nodes as input data from previous node\nconst inputArray = items.map(item => item.json); // get the array of objects\n\n// Desired column order\nconst columns = [\n  \"DateFound\", \"ATS\", \"Company\", \"JobTitle\", \"Location\", \"ApplyURL\",\n  \"Status\", \"Hash\", \"JobDescription\", \"ApplicationQuestions\",\n  \"JobID\", \"CoverLetter\", \"Answer_1\", \"Answer_2\", \"Answer_3\", \"Answer_4\"\n];\n\n// Map input to new objects with columns in the desired order\nconst outputArray = inputArray.map(job => {\n  const newJob = {};\n  for (const col of columns) {\n    newJob[col] = job[col] || \"\"; // leave blank if field does not exist\n  }\n  return newJob;\n});\n\n// n8n expects an array of { json: { ... } } objects\nreturn outputArray.map(row => ({ json: row }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        240
+      ],
+      "id": "c70cbcc8-ba91-4404-b889-6439166610f5",
+      "name": "Corrects the order/format",
+      "executeOnce": false
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        464,
+        208
+      ],
+      "id": "d6b5184b-2bde-4a3c-9164-c1ef7368118f",
+      "name": "Merges "
+    },
+    {
+      "parameters": {
+        "jsCode": "// 'items' contains all rows coming from the previous Merge/Get Row nodes\nconst newJobs = items; // all rows incoming\n\n// Set to track unique JobIDs\nconst seenJobIDs = new Set();\n\n// Array to store unique jobs\nconst uniqueJobs = [];\n\n// Loop through each job and filter duplicates based on JobID\nfor (const item of newJobs) {\n    const jobID = item.json.JobID?.toString(); // convert to string for safety\n    if (jobID && !seenJobIDs.has(jobID)) {\n        uniqueJobs.push(item);       // keep unique job\n        seenJobIDs.add(jobID);       // mark JobID as seen\n    }\n}\n\n// Return all unique jobs\nreturn uniqueJobs;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        96
+      ],
+      "id": "4c03c5bf-d282-4a59-802b-c27efd9c004c",
+      "name": "Deduplicate"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code_Node1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merges ",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code_Node2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_Node1": {
+      "main": [
+        [
+          {
+            "node": "Combines Job Description and Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code_Node2": {
+      "main": [
+        [
+          {
+            "node": "Combines job and description",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combines Job Description and Jobs": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Combines job and description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combines job and description": {
+      "main": [
+        [
+          {
+            "node": "Corrects the order/format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Corrects the order/format": {
+      "main": [
+        [
+          {
+            "node": "Merges ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merges ": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6ac15a51-f79b-49d8-9f8a-c7b9a9b885a4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c26a7b2488d25f74f98686f21e1c55e3ade065c08e4579e49c847d5b846b976c"
+  },
+  "id": "BZfZv66OJS9JWUzRXyB8f",
+  "tags": []
+}

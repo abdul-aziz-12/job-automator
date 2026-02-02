@@ -1,0 +1,542 @@
+{
+  "name": "answerfill_dataiku",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -208
+      ],
+      "id": "523f191f-7163-4813-9cc4-be5e3d05d543",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk",
+          "mode": "list",
+          "cachedResultName": "EMEA Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "dataiku",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        160,
+        -208
+      ],
+      "id": "dbc9bcc5-e5d7-430a-a3bd-e74bf65a9ae9",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "e7iZsbgLYK9nasfr",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "61f81430-fac6-45f2-9d02-afa088a8cd0a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================== HELPERS ==================\nconst normalize = (v) => {\n  if (v === null || v === undefined) return \"\";\n  if (v === \"empty\") return \"\";\n  return String(v);\n};\n\nconst decodeHtml = (str = \"\") => {\n  if (str === null || str === undefined) return \"\";\n  return String(str)\n    .replace(/&lt;/g, \"<\")\n    .replace(/&gt;/g, \">\")\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\");\n};\n\nconst stripHtml = (html = \"\") => {\n  if (!html) return \"\";\n  return String(html)\n    .replace(/<style[^>]*>.*?<\\/style>/gis, \"\")\n    .replace(/<script[^>]*>.*?<\\/script>/gis, \"\")\n    .replace(/<[^>]+>/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// ================== INPUTS FROM SHEET ==================\nconst jobDescription = stripHtml(\n  decodeHtml(normalize($json.JobDescription))\n);\n\nconst jobID = stripHtml(\n  decodeHtml(normalize($json.JobID))\n);\n\nconst applicationQuestions = stripHtml(\n  decodeHtml(normalize($json.ApplicationQuestions))\n);\n\nconst company = normalize($json.Company);\nconst jobTitle = normalize($json.JobTitle);\nconst location = normalize($json.Location);\n\n// ================== SYSTEM PROMPT ==================\nconst systemPrompt = `\nSYSTEM PROMPT FOR LLM\nSYSTEM PROMPT FOR OLLAMA\n\nYou are a professional job application assistant designed for fully automated workflows.\n\nYour task is to read a fixed candidate profile and dynamically match it with a provided job description and optional application questions.\n\nYou must produce a highly tailored cover letter and precise answers to application questions that maximize relevance, ATS compatibility, and recruiter clarity.\n\nYou must not hallucinate experience, companies, tools, certifications, or achievements.\nYou must only use information explicitly present in the candidate profile.\nYou may reframe, prioritize, and emphasize experience differently based on job requirements.\n\nTone guidelines\nProfessional, confident, concise, impact driven\nNo emojis\nNo fluff\nNo repetition\nNo generic statements\n\nLanguage guidelines\nUse the language of the job description if it is clearly dominant\nOtherwise default to professional English\nDo not mix languages\n\nFormatting rules\nOutput plain text only\nNo markdown\nNo bullet symbols\nShort paragraphs\nClear structure\n\nCOLUMN OUTPUT RULES\nYou must generate content exactly for the following columns.\n\nColumn L\nCoverLetter\nOne page maximum\nTailored directly to the job title, company mission, and responsibilities\nExplicitly connect candidate experience to the role requirements\nMention company name and role title naturally\nEnd with a confident closing\n\nColumns M N O P\nApplication question answers\nIf ApplicationQuestions are provided\nAnswer each question separately in order\nEach answer concise, structured, and role aligned\nIf fewer than four questions exist, leave remaining answers empty\nIf no questions exist, leave all answers empty\n\nINPUT YOU WILL RECEIVE EACH RUN\n\nJobDescription\nApplicationQuestions\nCompanyName\nJobTitle\nLocation\n\nSTATIC CANDIDATE PROFILE\nUse this as the single source of truth for experience, education, projects, and skills.\n\nCandidate name\nAbdul Aziz Chaudhry\n\nLocation\nClermont Ferrand France\n\nProfessional summary\nProduct Manager and Data Analyst with strong experience in data platforms, cloud migration, analytics automation, and Web3 ecosystems. Delivered over forty percent efficiency gains and over one million dollars in revenue impact at S and P Global. Currently pursuing an MSc in Business Intelligence and Analytics and actively seeking product, data, or consulting roles across France and EMEA.\n\nEducation\nMaster of Science Business Intelligence and Analytics, Clermont School of Business, 2025 to 2026\nBachelor of Electrical Engineering, National University of Sciences and Technology, 2017 to 2021\nMicrosoft AI Product Manager Professional Certificate\nGenerative AI with Large Language Models by deeplearning dot ai\n\nWork experience\nProduct Manager Data Management Solutions at S and P Global, 2022 to 2025\nLed SNL Feeds product line with over one million dollars in revenue impact\nManaged AWS cloud migration improving delivery efficiency by forty percent\nReduced data feed failures by sixty percent\nMigrated five hundred plus clients to in house FTP using Python automation\nOwned backlog prioritization using WSJF\nBuilt real time dashboards for SLA and business metrics\nWorked across Snowflake, AWS, Azure, SQL, XML\n\nProduct Technical and Collaborations Manager Web3 DAO, 2023 to 2024\nBuilt fifty plus strategic partnerships across BTC ETH and Solana\nGenerated over one hundred fifty thousand dollars ROI\nDeveloped on chain analytics using Python and blockchain APIs\nWorked with Dune Analytics, Allium, Polkadot, Kleros\nHandled automation, Git, DNS, low code full stack tooling\n\nProduct Executive Bakhabar Kisaan, 2021 to 2022\nManaged VAS services using OBD IVR SMS\nImproved engagement by fifteen percent\nLaunched new services driving twenty percent revenue growth\nWorked in Agile environments\n\nFounder Hallowy ecommerce, 2021\nBuilt and scaled ecommerce brand\nAchieved three thousand dollars first month revenue\nManaged ads, catalog, and analytics\n\nProjects\nJob application automation using n8n Zapier Python JavaScript\nEnd to end data ingestion enrichment and deduplication\nAutomated job applications and screening workflows\n\nData analytics and BI projects using Power BI SQL Snowflake\nData modeling ETL dashboarding Agile Scrum\nPredictive and optimization models for business insights\n\nTechnical skills\nSQL Python Snowflake AWS Azure Power BI Data Engineering Analytics Automation Cloud Platforms Machine Learning basics\n\nSoft skills\nStakeholder management cross functional collaboration leadership analytical thinking communication\n\nLanguages\nEnglish fluent\nFrench basic\nUrdu native\n\nFINAL INSTRUCTIONS\nAnalyze the job description carefully\nIdentify the most relevant experiences from the candidate profile\nAlign achievements to responsibilities and requirements\nWrite content as if a senior recruiter is reading it\nOptimize for ATS keyword matching without keyword stuffing\nNever invent facts\n\nReturn JobID as it is\n\nCOLUMN OUTPUT RULES\nYou must generate content exactly for the following columns.\n\nColumn L\nCoverLetter\n\nColumns M N O P \nApplication question answers\n\nColumn Q\nJobID\n\nFINAL OUTPUT FORMAT\nYou MUST return the output in EXACTLY 6 blocks separated by the string \"|||\".\n\nINPUT DATA\n\nJobID:\n${jobID}\n\nJobDescription:\n${jobDescription}\n\nApplicationQuestions:\n${applicationQuestions}\n\nCompanyName:\n${company}\n\nJobTitle:\n${jobTitle}\n\nLocation:\n${location}\n`;\n\n// ================== OUTPUT TO GEMINI ==================\nreturn [\n  {\n    json: {\n      row_number: $json.row_number,\n      JobID: $json.JobID,\n      prompt: systemPrompt\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        -96
+      ],
+      "id": "63606bea-03a0-42cf-9a41-0707ce6c8fe5",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const cover = (item.json.CoverLetter || '').trim();\n\n  return {\n    json: {\n      ...item.json,\n      needsGeneration:\n        cover === '' || cover.toLowerCase() === 'empty'\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -112
+      ],
+      "id": "687cbcee-4e6d-492e-85bd-2ca8c3064793",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d89fdb27-7435-4c7a-a806-928ecaf05b9d",
+              "leftValue": "={{ $json.needsGeneration === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        -112
+      ],
+      "id": "75892606-982e-4b08-84ce-403bcc7e6a18",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        -64
+      ],
+      "id": "08122c24-b287-49ea-a35d-a99c761cb87e",
+      "name": "Message a model",
+      "alwaysOutputData": false,
+      "notesInFlow": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "yjahlOQHaBBUGygB",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get Gemini text safely\nconst raw =\n  $json.candidates?.[0]?.content?.parts?.[0]?.text || \"\";\n\n// Split on delimiter\nconst parts = raw.split(\"|||\").map(p => p.trim());\n\n// Clean fallback answers\nconst clean = (v) =>\n  v?.startsWith(\"No application questions\") ? \"\" : v;\n\nreturn [\n  {\n    json: {\n      JobID: $json.JobID,          // 🔑 REQUIRED\n      row_number: $json.row_number, // (optional but safe)\n\n      CoverLetter: parts[0] || \"\",\n      Answer_1: clean(parts[1]),\n      Answer_2: clean(parts[2]),\n      Answer_3: clean(parts[3]),\n      Answer_4: clean(parts[4]),\n      Answer_5: clean(parts[5])\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -64
+      ],
+      "id": "d23eb139-8937-4080-a6e7-dc2a2c899fd1",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk",
+          "mode": "list",
+          "cachedResultName": "EMEA Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "dataiku",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1OWWL2pYxDbKQcpxgBpdD3hGycZNgfR60RTmn9ryZhuk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "CoverLetter": "={{ $json.CoverLetter }}",
+            "Answer_1": "={{ $json.Answer_1 }}",
+            "Answer_2": "={{ $json.Answer_2 }}",
+            "Answer_3": "={{ $json.Answer_3 }}",
+            "Answer_4": "={{ $json.Answer_4 }}",
+            "row_number": 0,
+            "JobID": "={{ $json.JobID }}"
+          },
+          "matchingColumns": [
+            "JobID"
+          ],
+          "schema": [
+            {
+              "id": "DateFound",
+              "displayName": "DateFound",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ATS",
+              "displayName": "ATS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JobTitle",
+              "displayName": "JobTitle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ApplyURL",
+              "displayName": "ApplyURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hash",
+              "displayName": "Hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JobDescription",
+              "displayName": "JobDescription",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ApplicationQuestions",
+              "displayName": "ApplicationQuestions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JobID",
+              "displayName": "JobID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CoverLetter",
+              "displayName": "CoverLetter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_1",
+              "displayName": "Answer_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_2",
+              "displayName": "Answer_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_3",
+              "displayName": "Answer_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer_4",
+              "displayName": "Answer_4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2064,
+        -64
+      ],
+      "id": "60030b7f-a002-416c-83a7-2135e35cd16e",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "e7iZsbgLYK9nasfr",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "JobID",
+              "field2": "Answer_4"
+            }
+          ]
+        },
+        "joinMode": "enrichInput1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1856,
+        -176
+      ],
+      "id": "0ddd9a53-e3dd-46d3-ae51-2294272ac246",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6d7c01da-ffd9-484f-a241-55592aaeb681",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c26a7b2488d25f74f98686f21e1c55e3ade065c08e4579e49c847d5b846b976c"
+  },
+  "id": "ZZAjaz8NZ0rHBZEK3JR9F",
+  "tags": []
+}
